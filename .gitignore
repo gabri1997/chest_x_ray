@@ -1,0 +1,44 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Virtual environments
+Chest/
+venv/
+.env/
+
+# Hugging Face cache and downloaded datasets
+data/
+.cache/
+.huggingface/
+
+# Logs
+*.log
+
+# Checkpoints
+*.pt
+*.pth
+
+# OS
+.DS_Store
+Thumbs.db
+
+# PyCharm
+.idea/
+
+# Coverage reports
+.coverage
+htmlcov/
+coverage.xml
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Misc
+pip-wheel-metadata/
