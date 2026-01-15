@@ -1,0 +1,30 @@
+# --- Core ML ---
+torch
+torchvision
+torchaudio
+
+# --- Vision Transformers ---
+timm
+
+# --- Data handling ---
+numpy
+pandas
+scikit-learn
+scipy
+pillow
+opencv-python
+
+# --- Hugging Face (dataset download) ---
+huggingface_hub
+datasets
+
+# --- Training utilities ---
+tqdm
+pyyaml
+
+# --- Visualization & analysis ---
+matplotlib
+seaborn
+
+# --- Experiment tracking (optional but useful) ---
+wandb
