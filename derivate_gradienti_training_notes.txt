@@ -1,0 +1,171 @@
+Derivate e gradienti nel training di una rete neurale (note per il repo)
+================================================================
+
+Contesto
+--------
+Nel training di una rete neurale vogliamo trovare i parametri (pesi e bias) w che minimizzano una funzione obiettivo
+chiamata loss (o funzione di costo). Indichiamo la rete come f(x; w), dove:
+  - x è l'input (es. immagine),
+  - w è l'insieme di tutti i parametri del modello,
+  - f produce un output (logits, probabilità, ecc.),
+  - la loss L misura quanto l'output è "sbagliato" rispetto al target.
+
+L'ottimizzazione è quindi:
+    min_w  L(w)
+dove L(w) in pratica è la loss media sul batch (o sul dataset).
+
+1) Derivata: significato matematico (caso 1D)
+---------------------------------------------
+Considera una loss L(w) che dipende da un solo parametro reale w.
+
+La derivata dL/dw è definita come:
+    dL/dw = lim_{ε -> 0} [L(w + ε) - L(w)] / ε
+
+Interpretazione:
+  - misura il tasso di variazione della loss rispetto a w,
+  - è la "pendenza" locale della funzione L nel punto w.
+
+Approssimazione lineare (Taylor al 1° ordine):
+    L(w + ε) ≈ L(w) + ε * (dL/dw)     per ε piccolo
+
+Segno della derivata:
+  - Se dL/dw > 0, aumentando w di poco la loss aumenta.
+  - Se dL/dw < 0, aumentando w di poco la loss diminuisce.
+  - Se dL/dw = 0, piccoli cambiamenti in w non cambiano la loss (localmente).
+
+2) Derivata parziale: significato matematico (caso multi-dimensionale)
+----------------------------------------------------------------------
+In una rete neurale ci sono moltissimi parametri:
+    w = (w_1, w_2, ..., w_n)
+
+La loss è una funzione di n variabili:
+    L(w_1, w_2, ..., w_n)
+
+La derivata "giusta" per ciascun parametro è la derivata parziale:
+    ∂L/∂w_i = lim_{ε -> 0} [ L(..., w_i + ε, ...) - L(..., w_i, ...) ] / ε
+
+Interpretazione:
+  - dice quanto cambia la loss se modifichi solo w_i, mantenendo fissi tutti gli altri parametri.
+
+Il gradiente (vettore dei gradienti) è:
+    ∇L(w) = ( ∂L/∂w_1, ∂L/∂w_2, ..., ∂L/∂w_n )
+
+Ogni componente del gradiente contiene due informazioni:
+  - segno: indica se aumentare w_i fa salire o scendere L,
+  - magnitudine: indica quanto L è sensibile a quel parametro.
+
+3) Perché il gradiente indica una "direzione"
+---------------------------------------------
+Nel caso multi-dimensionale, per una piccola variazione Δw vale l'approssimazione:
+    L(w + Δw) ≈ L(w) + ∇L(w) · Δw
+
+dove "·" è il prodotto scalare.
+
+Proprietà importante:
+  - ∇L(w) è la direzione di massima crescita locale della loss.
+  - quindi -∇L(w) è la direzione di massima discesa locale.
+
+Se scegli:
+    Δw = -η ∇L(w)     (η > 0 è il learning rate)
+allora:
+    L(w + Δw) ≈ L(w) - η ||∇L(w)||^2
+che è minore di L(w) se ∇L(w) ≠ 0.
+
+Questa è l'intuizione matematica dietro il gradient descent.
+
+4) Aggiornamento dei pesi (optimizer)
+-------------------------------------
+L'optimizer implementa una regola per aggiornare i parametri w usando i gradienti.
+
+SGD (Stochastic Gradient Descent) "base":
+    w <- w - lr * ∇L(w)
+
+componente per componente:
+    w_i <- w_i - lr * (∂L/∂w_i)
+
+Dove:
+  - lr (learning rate) controlla la dimensione del passo,
+  - un lr troppo alto può far divergere l'ottimizzazione,
+  - un lr troppo basso rende il training molto lento.
+
+Momentum (SGD con inerzia):
+Si introduce una variabile di "velocità" v:
+    v <- μ v + ∇L(w)
+    w <- w - lr * v
+Dove μ (momentum) tipicamente è 0.9.
+Effetto: smoothing dei gradienti e avanzamento più stabile (meno oscillazioni).
+
+Weight decay (regolarizzazione L2):
+Penalizza pesi troppo grandi. In pratica si aggiunge un termine alla loss:
+    L_total(w) = L_data(w) + λ ||w||^2
+(oppure una forma equivalente implementata dall'optimizer).
+Effetto: tende a migliorare la generalizzazione e a limitare overfitting.
+
+Adam / AdamW:
+Adam usa stime adattive dei momenti (media e varianza dei gradienti) per ogni parametro.
+AdamW è una variante che gestisce meglio weight decay (decoupled weight decay).
+In pratica spesso converge più facilmente all'inizio rispetto a SGD, ma va valutato sul problema.
+
+5) Backpropagation: come PyTorch calcola i gradienti
+----------------------------------------------------
+In PyTorch:
+  - Il forward costruisce un grafo computazionale.
+  - loss.backward() applica la chain rule (regola della catena) per calcolare ∂L/∂w_i
+    per tutti i parametri.
+
+I gradienti finiscono in:
+    param.grad
+
+Il ciclo tipico (per batch) è:
+    optimizer.zero_grad()   # azzera/annulla i gradienti accumulati
+    logits = model(x)       # forward
+    loss = criterion(logits, y)
+    loss.backward()         # calcola i gradienti
+    optimizer.step()        # aggiorna i parametri
+
+Nota: PyTorch accumula i gradienti per default, quindi zero_grad() è necessario
+ad ogni iterazione (salvo casi particolari come gradient accumulation).
+
+6) Scheduler: a cosa serve (e cosa NON fa)
+------------------------------------------
+Lo scheduler NON aggiorna i pesi. Cambia (di solito) il learning rate dell'optimizer nel tempo.
+
+Motivazione:
+  - learning rate alto: progressi rapidi all'inizio
+  - learning rate basso: fine-tuning e stabilità vicino a un minimo
+
+Esempio: StepLR
+    lr_t = lr_0 * gamma^{ floor(epoch / step_size) }
+
+Dove:
+  - step_size: ogni quante epoche ridurre lr
+  - gamma: fattore moltiplicativo (es. 0.1)
+
+Esempio con lr_0 = 1e-4, step_size=7, gamma=0.1:
+  - epoche 1-7:   lr = 1e-4
+  - epoche 8-14:  lr = 1e-5
+  - epoche 15-21: lr = 1e-6
+  ...
+
+Uso tipico con StepLR:
+    for epoch in range(E):
+        train(...)
+        scheduler.step()
+
+(Altri scheduler, come ReduceLROnPlateau, vanno chiamati passando una metrica di validazione.)
+
+7) Nota pratica: multi-label con BCEWithLogitsLoss
+--------------------------------------------------
+Nel caso multi-label (più patologie possibili per la stessa immagine), tipicamente:
+  - il modello produce logits di shape (B, K)
+  - il target è un vettore multi-hot di shape (B, K) in float32
+  - si usa BCEWithLogitsLoss, che combina sigmoid + binary cross entropy in modo stabile.
+
+Per ogni classe k:
+    p_k = sigmoid(logit_k)
+e la loss BCE (per classe) usa:
+    - y_k * log(p_k) - (1 - y_k) * log(1 - p_k)
+
+BCEWithLogitsLoss evita instabilità numeriche calcolando tutto direttamente dai logits.
+
+Fine.
