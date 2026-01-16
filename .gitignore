@@ -17,9 +17,15 @@ venv/
 data/
 .cache/
 .huggingface/
+*.parquet
+*.arrow
 
 # Logs
 *.log
+*.wandb
+*.out
+*.err
+*.lock
 
 # Checkpoints
 *.pt
@@ -42,3 +48,7 @@ coverage.xml
 
 # Misc
 pip-wheel-metadata/
+
+# Folder 
+/work/grana_far2023_fomo/ChestXray/data/NIH_ChestXray14/data
+
