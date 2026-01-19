@@ -113,11 +113,17 @@ class myNet():
 
 
     def train(self):
+        patience = 10
+        best_auroc = 0.0
+        current_waiting_time = 0
         for epoch in range(self.num_epochs):
             self.model.train()
+            # monitorando l'AUROC per implementare l'early stopping
             current_loss_value = 0.0
             for image, lbl in self.train_loader:
+               
                # non_blocking=True per migliorare le prestazioni con pin_memory=True nel DataLoader, rende la copia in GPU asincrona cosi la CPU non aspetta
+               # in questo punto il batch dalla RAM viene copiato nella VRAM della GPU e diventa un tensor Cuda, tutto il batch non l'intero dataset chiaramente 
                image = image.to(self.device, non_blocking=True)
                lbl = lbl.to(self.device, non_blocking=True)
                # azzero i gradienti perchè Pytorch accumula i gradienti ad ogni backward() per default
@@ -141,6 +147,23 @@ class myNet():
 
             print("Validating...")
             metrics = self.evaluate()
+            current_auroc_value = metrics["auroc_macro"]
+            if current_auroc_value > best_auroc:
+                best_auroc = current_auroc_value
+                best_auroc = metrics["auroc_macro"]
+                current_waiting_time = 0
+                torch.save(self.model.state_dict(), "/work/grana_far2023_fomo/ChestXray/models/best_model.pth")
+                # scrivo in un file txt le metriche
+                print("Scrivo le metriche del best model su file...")
+                with open("/work/grana_far2023_fomo/ChestXray/models/best_model_metrics.txt", "w") as f:
+                    for key, value in metrics.items():
+                        f.write(f"{key}: {value}\n")
+                print(f"Best model saved with AUROC(macro): {best_auroc:.4f}")
+            else:
+                current_waiting_time += 1
+                if current_waiting_time >= patience:
+                    print("Early stopping triggered.")
+                    return
 
     @torch.no_grad()
     def evaluate(self):
@@ -153,7 +176,6 @@ class myNet():
         self.f1_macro.reset()
 
         self.model.eval()
-
 
         metrics = {}
         tot_loss = 0

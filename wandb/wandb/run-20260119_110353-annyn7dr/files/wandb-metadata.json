@@ -1,0 +1,78 @@
+{
+  "os": "Linux-5.15.0-144-generic-x86_64-with-glibc2.35",
+  "python": "CPython 3.11.5",
+  "startedAt": "2026-01-19T10:03:53.891897Z",
+  "program": "/work/grana_far2023_fomo/ChestXray/baseline_net.py",
+  "codePath": "baseline_net.py",
+  "codePathLocal": "baseline_net.py",
+  "git": {
+    "remote": "git@github.com:gabri1997/chest_x_ray.git",
+    "commit": "f9c88628017c6c37bd332be7fedf58b07a92d893"
+  },
+  "email": "gabrielerosati97@gmail.com",
+  "root": "/work/grana_far2023_fomo/ChestXray/wandb",
+  "host": "nullazzo",
+  "executable": "/work/grana_far2023_fomo/ChestXray/Chest/bin/python",
+  "cpu_count": 32,
+  "cpu_count_logical": 64,
+  "gpu": "Quadro RTX 6000",
+  "gpu_count": 1,
+  "disk": {
+    "/": {
+      "total": "210241560576",
+      "used": "31640203264"
+    }
+  },
+  "memory": {
+    "total": "404321075200"
+  },
+  "gpu_nvidia": [
+    {
+      "name": "Quadro RTX 6000",
+      "memoryTotal": "25769803776",
+      "cudaCores": 4608,
+      "architecture": "Turing",
+      "uuid": "GPU-9df1e99c-4606-2680-46af-3b7b3af79dcf"
+    }
+  ],
+  "cudaVersion": "12.2",
+  "slurm": {
+    "cluster_name": "aimagelab",
+    "conf": "/etc/slurm/slurm.conf",
+    "cpus_on_node": "4",
+    "cpus_per_task": "4",
+    "gpus_on_node": "1",
+    "gtids": "0",
+    "job_account": "grana_maxillo",
+    "job_cpus_per_node": "4",
+    "job_end_time": "1768903241",
+    "job_gid": "506",
+    "job_gpus": "2",
+    "job_id": "2709820",
+    "job_name": "ChestXray_train",
+    "job_nodelist": "nullazzo",
+    "job_num_nodes": "1",
+    "job_partition": "all_usr_prod",
+    "job_qos": "normal",
+    "job_start_time": "1768816841",
+    "job_uid": "52290",
+    "job_user": "grosati",
+    "jobid": "2709820",
+    "localid": "0",
+    "mem_per_node": "32768",
+    "nnodes": "1",
+    "nodeid": "0",
+    "nodelist": "nullazzo",
+    "oom_kill_step": "0",
+    "prio_process": "0",
+    "procid": "0",
+    "submit_dir": "/work/grana_far2023_fomo/ChestXray",
+    "submit_host": "ailb-login-03",
+    "task_pid": "1424888",
+    "tasks_per_node": "1",
+    "topology_addr": "nullazzo",
+    "topology_addr_pattern": "node",
+    "tres_per_task": "cpu=4"
+  },
+  "writerId": "kxaesr7hepvdlhc6k1zvj7cxf5kjfnuw"
+}
