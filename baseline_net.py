@@ -206,6 +206,9 @@ class myNet():
             }
 
             print(
+                f"Accuracy(micro): {metrics['accuracy_micro']:.4f} | "
+                f"Precision(micro): {metrics['precision_micro']:.4f} | "
+                f"Recall(micro): {metrics['recall_micro']:.4f} | "
                 f"Val loss: {metrics['val_loss']:.4f} | "
                 f"AUROC(macro): {metrics['auroc_macro']:.4f} | "
                 f"F1(micro): {metrics['f1_micro']:.4f} | "
