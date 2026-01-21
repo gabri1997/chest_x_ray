@@ -13,6 +13,7 @@ from torchmetrics.classification import (
     MultilabelRecall,
     MultilabelF1Score,
 )
+from vit import SimpleViT
 import wandb
 
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
@@ -80,7 +81,13 @@ class myNet():
             transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
         ])
 
-        self.model = Densenet(num_classes=num_classes).to(self.device)
+        if net_type == 'densenet':
+            print("Inizializzo il modello Densenet...")
+            self.model = Densenet(num_classes=num_classes).to(self.device)
+        elif net_type == 'vit':
+            print("Inizializzo il modello ViT...")
+            self.model = SimpleViT(num_classes=num_classes, img_size=224, patch_size=16, in_channels=3,
+                                embed_dim=256, num_heads=4, depth=4, mlp_dim=512).to(self.device)
 
         dataset = chest_xray_dataset_loader()
         chest_ds_train, chest_ds_val, chest_ds_test, classes, class_idx, num_classes = dataset.load_dataset()
@@ -94,7 +101,10 @@ class myNet():
         self.test_loader = DataLoader(self.test_dataset,batch_size=self.batch_size,shuffle=False,num_workers=self.num_workers,pin_memory=True)
 
         # qui sto allenando tutti i parametri del modello (densenet + classifier) perchè self.model.parameters() include tutti i parametri della rete, quindi sto facendo fine tuning completo
-        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=self.momentum, weight_decay=self.weight_decay)
+        if net_type == 'densenet':
+            self.optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=self.momentum, weight_decay=self.weight_decay)
+        elif net_type == 'vit':
+            self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate, weight_decay=self.weight_decay)
         self.criterion = nn.BCEWithLogitsLoss()
         self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=self.step_size, gamma=self.gamma)
    
@@ -147,10 +157,10 @@ class myNet():
 
             print("Validating...")
             metrics = self.evaluate()
+            print("Ho terminato l'evaluation")
             current_auroc_value = metrics["auroc_macro"]
             if current_auroc_value > best_auroc:
                 best_auroc = current_auroc_value
-                best_auroc = metrics["auroc_macro"]
                 current_waiting_time = 0
                 torch.save(self.model.state_dict(), "/work/grana_far2023_fomo/ChestXray/models/best_model.pth")
                 # scrivo in un file txt le metriche
@@ -158,12 +168,13 @@ class myNet():
                 with open("/work/grana_far2023_fomo/ChestXray/models/best_model_metrics.txt", "w") as f:
                     for key, value in metrics.items():
                         f.write(f"{key}: {value}\n")
+                    f.write(f"epochs: {epoch+1}\n")
                 print(f"Best model saved with AUROC(macro): {best_auroc:.4f}")
             else:
                 current_waiting_time += 1
                 if current_waiting_time >= patience:
                     print("Early stopping triggered.")
-                    return
+                    break
 
     @torch.no_grad()
     def evaluate(self):
@@ -255,8 +266,7 @@ if __name__ == '__main__':
 
     num_classes = 15
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = Densenet(num_classes=num_classes)
-    trainer = myNet(num_classes=num_classes, num_epochs=50, num_workers=4, device=device)
+    trainer = myNet(num_classes=num_classes, num_epochs=50, num_workers=4, device=device, net_type='vit', batch_size=32)
     trainer.train()
 
 

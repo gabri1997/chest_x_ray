@@ -1,0 +1,37 @@
+Un Vision Transformer non può prendere direttamente un’immagine 2D perché il Transformer è progettato per lavorare su sequenze di vettori (token), non su dati con struttura spaziale 2D.
+
+Per questo l’immagine viene prima suddivisa in patch non sovrapposte (es. 16×16).
+
+Ogni patch viene flattenizzata e poi passata attraverso una proiezione lineare che la mappa in un vettore di dimensione fissa (patch embedding).
+
+In questo modo l’immagine diventa una sequenza di token, analoga a una frase nel NLP, che può essere data in input al meccanismo di self-attention.
+
+Il patch embedding è il meccanismo che trasforma ogni patch dell’immagine in un vettore nello spazio di embedding.
+
+Ogni patch viene flattenizzata e poi proiettata tramite una trasformazione lineare in uno spazio di dimensione D, producendo un token.
+
+Dal punto di vista di una CNN, il patch embedding è equivalente a una convoluzione con kernel grande quanto la patch e stride uguale alla patch size, che estrae direttamente una rappresentazione vettoriale per ogni patch.
+
+Nei Vision Transformer le positional embeddings sono necessarie perché il meccanismo di self-attention è intrinsecamente invariante alle permutazioni e quindi non contiene alcuna informazione sulla posizione dei token.
+
+A differenza delle CNN, che incorporano implicitamente la struttura spaziale tramite convoluzioni e receptive field locali, i ViT trattano i patch come una sequenza non ordinata.
+
+Le positional embeddings servono quindi ad aggiungere informazione sulla posizione relativa o assoluta dei patch, permettendo al modello di distinguere patch provenienti da regioni diverse dell’immagine.
+
+Senza positional embeddings, il modello non sarebbe in grado di ricostruire la struttura spaziale dell’immagine.
+
+Il self-attention calcola, per ogni token della sequenza, tre vettori tramite proiezioni lineari: Query (Q), Key (K), Value (V).
+
+Si calcola il prodotto tra Q e K trasposta (Q·Kᵀ), che misura la compatibilità tra i token.
+
+Ogni patch i usa la sua Query la confronta con le Key di tutte le altre patch ottiene dei pesi di attenzione e usa quei pesi per fare una media pesata dei Value
+
+Questo prodotto viene diviso per √d_k per stabilità numerica e passa attraverso un softmax, ottenendo una distribuzione di attenzione che indica quanto ogni token deve “guardare” gli altri token.
+
+Infine, questa matrice di attenzione viene moltiplicata per V, producendo una rappresentazione aggregata dei token che tiene conto del contesto globale della sequenza.
+
+La multi-head attention consiste nell’usare più teste di attenzione parallele invece di una sola, ciascuna con i propri pesi Q, K, V.
+
+Ogni testa può concentrarsi su diversi tipi di relazioni tra i token, come relazioni locali o globali, o pattern diversi nei patch.
+
+Gli output delle teste vengono concatenati e passati attraverso una proiezione lineare finale, ottenendo un embedding che combina tutte le informazioni rilevanti.
