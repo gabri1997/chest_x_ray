@@ -4,7 +4,7 @@ Questo progetto affronta il problema della **classificazione multilabel di immag
 
 ---
 
-## 📌 Obiettivo
+## Obiettivo
 
 Dato un esame radiografico del torace, il modello deve predire **più patologie simultaneamente** (multilabel classification), un setting tipico in ambito clinico.
 
@@ -16,15 +16,15 @@ Il progetto si concentra su:
 
 ---
 
-## 🧠 Modelli Utilizzati
+## Modelli Utilizzati
 
-### 1️⃣ DenseNet-121
+### DenseNet-121
 - Pre-addestrata su ImageNet
 - Feature extractor convoluzionale
 - Classificatore finale `Linear → BCEWithLogitsLoss`
 - Fine-tuning completo di tutti i layer
 
-### 2️⃣ Simple Vision Transformer (ViT)
+### 2️Simple Vision Transformer (ViT)
 Implementazione custom di un Vision Transformer semplificato:
 - Patch embedding (16×16)
 - Self-attention multi-head
@@ -34,7 +34,7 @@ Implementazione custom di un Vision Transformer semplificato:
 
 ---
 
-## 🏗 Architettura ViT (schema concettuale)
+## Architettura ViT (schema concettuale)
 
 ```
 Immagine
@@ -58,7 +58,7 @@ Sigmoid (multilabel)
 
 ---
 
-## 🧪 Dataset
+## Dataset
 
 - Dataset di Chest X-ray con annotazioni multilabel
 - Split: Training / Validation / Test
@@ -66,7 +66,7 @@ Sigmoid (multilabel)
 
 ---
 
-## 🔄 Data Augmentation & Preprocessing
+## Data Augmentation & Preprocessing
 
 ### Training
 - Resize (256)
@@ -81,7 +81,7 @@ Sigmoid (multilabel)
 
 ---
 
-## ⚙️ Training Setup
+## Training Setup
 
 - Loss: `BCEWithLogitsLoss`
 - Optimizer:
@@ -94,7 +94,7 @@ Sigmoid (multilabel)
 
 ---
 
-## 📊 Metriche Utilizzate
+## Metriche Utilizzate
 
 - Accuracy (micro)
 - Precision (micro)
@@ -103,11 +103,11 @@ Sigmoid (multilabel)
 - F1-score (macro)
 - AUROC (macro)
 
-⚠️ L’accuracy non è sufficiente in contesti multilabel sbilanciati.
+L’accuracy non è sufficiente in contesti multilabel sbilanciati.
 
 ---
 
-## 📈 Risultati Migliori
+## Risultati Migliori
 
 ### DenseNet-121
 ```
@@ -133,7 +133,7 @@ Val loss:           0.1981
 
 ---
 
-## 🧠 Analisi dei Risultati
+## Analisi dei Risultati
 
 - Accuracy simile → non discriminante
 - ViT ottiene AUROC macro più alto
@@ -143,7 +143,7 @@ Val loss:           0.1981
 
 ---
 
-## 🚧 Limiti Attuali
+## Limiti Attuali
 
 - Forte class imbalance
 - F1 macro ancora basso
@@ -151,7 +151,7 @@ Val loss:           0.1981
 
 ---
 
-## 🚀 Sviluppi Futuri
+## Sviluppi Futuri
 
 - Class-weighted BCE / Focal Loss
 - Threshold tuning per classi
@@ -161,7 +161,7 @@ Val loss:           0.1981
 
 ---
 
-## 🛠 Tecnologie Utilizzate
+## Tecnologie Utilizzate
 
 - PyTorch
 - Torchvision
@@ -172,12 +172,12 @@ Val loss:           0.1981
 
 ---
 
-## 👨‍💻 Autore
+## Autore
 
 Progetto sviluppato a scopo di studio e ricerca su CNN e Transformer in medical imaging.
 
 ---
 
-## 📜 Licenza
+## Licenza
 
 Uso accademico / sperimentale.
