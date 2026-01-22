@@ -1,5 +1,6 @@
 from datetime import datetime
 import torch
+import numpy as np
 import os
 import json
 import torch.nn as nn
@@ -147,6 +148,20 @@ class myNet():
         focal_loss = modulating_factor * alpha_factor * bce_loss
         return focal_loss.mean()
 
+    def mixup_data(self, x, y, alpha=0.2, prob=0.5):
+        # se faccio più del 50% di probabilità allora non applico mixup
+        if np.random.rand() > prob:
+            return x, y
+        if alpha > 0:
+            lam = np.random.beta(alpha, alpha)
+        else:
+            lam = 1
+        batch_size = x.size()[0]
+        index = torch.randperm(batch_size).to(x.device)
+        
+        mixed_x = lam * x + (1 - lam) * x[index, :]
+        mixed_y = lam * y + (1 - lam) * y[index, :]
+        return mixed_x, mixed_y
 
     def write_report_results(self, metrics, saving_epoch):
         slurm_job_id = os.environ.get("SLURM_JOB_ID", "no_slurm_id")
@@ -199,7 +214,14 @@ class myNet():
                # non_blocking=True per migliorare le prestazioni con pin_memory=True nel DataLoader, rende la copia in GPU asincrona cosi la CPU non aspetta
                # in questo punto il batch dalla RAM viene copiato nella VRAM della GPU e diventa un tensor Cuda, tutto il batch non l'intero dataset chiaramente 
                image = image.to(self.device, non_blocking=True)
-               lbl = lbl.to(self.device, non_blocking=True)
+
+               # se uso mixup augmentation, perchè la loss diventa continua essendo il target continuo tra 0 e 1:  
+               lbl = lbl.to(self.device, non_blocking=True).float()
+               image,lbl = self.mixup_data(image, lbl, alpha=0.2, prob=0.5)
+               # se non uso mixup:
+               # lbl = lbl.to(self.device, non_blocking=True)
+
+
                # azzero i gradienti perchè Pytorch accumula i gradienti ad ogni backward() per default
                # mi serve per cambiare i pesi ad ogni batch
                self.optimizer.zero_grad()
@@ -355,7 +377,7 @@ if __name__ == '__main__':
     # in sintesi, il gradiente mi dice in che direzione e di quanto cambiare w per minimizzare la loss durante l'allenamento del modello
     # I pesi sono un vettore multidimensionale enorme ∇w​L=(∂w1​∂L​,∂w2​∂L​,...,∂wn​∂L​), ogni componente mi dice "se aumento quel peso un pochino, la loss sale o scende?" 
     # quindi il gradiente è anch'esso un vettore multidimensionale, il segno di ciascuna componente mi dice se aumentare o diminuire quel peso per ridurre la loss, (su/giu), la magnitude mi dice di quanto, se quel peso influenza molto la Loss
-    # ----> loss.backward(), è la backpropagation,git calcola tutti questi gradienti, cioè tutte le derivate parziali della loss rispetto ai pesi e li salva in w.grad per ogni peso w nel modello
+    # ----> loss.backward(), è la backpropagation,calcola tutti questi gradienti, cioè tutte le derivate parziali della loss rispetto ai pesi e li salva in w.grad per ogni peso w nel modello
     # ----> self.optimizer.step() usa questi gradienti per aggiornare tutti i pesi
     
 
