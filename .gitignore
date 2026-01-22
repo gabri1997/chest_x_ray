@@ -17,8 +17,10 @@ venv/
 data/
 .cache/
 .huggingface/
+.hf/
 *.parquet
 *.arrow
+
 
 # Logs
 *.log
