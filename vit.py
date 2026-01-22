@@ -23,6 +23,9 @@ class SimpleViT(nn.Module):
     def __init__(self, num_classes=15, img_size=224, patch_size=16, in_channels=3, embed_dim=256, num_heads=4, depth=4, mlp_dim=512):
         super().__init__()
         self.patch_embed = PatchEmbedding(img_size, patch_size, in_channels, embed_dim)
+        # il cls token è il classification token, un vettore di embedding che viene aggiunto all'inizio della sequenza dei patch
+        # è fondamentalmente un aggregatore al posto di un pooling o di un aggregation function che mi permette di riassumere tutti i vettori di tutte le patches
+        # in un solo vettore che poi passo al classificatore finale
         self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
         self.pos_embed = nn.Parameter(torch.zeros(1, 1 + self.patch_embed.n_patches, embed_dim))
         self.dropout = nn.Dropout(0.1)

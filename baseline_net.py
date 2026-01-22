@@ -1,4 +1,7 @@
+from datetime import datetime
 import torch
+import os
+import json
 import torch.nn as nn
 import torchvision.models as models
 from tqdm import tqdm
@@ -19,6 +22,11 @@ import wandb
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
 IMAGENET_STD  = [0.229, 0.224, 0.225]
 
+
+SLURM_JOB_ID = os.environ.get("SLURM_JOB_ID", "no_slurm_id")
+print("SLURM Job ID:", SLURM_JOB_ID)
+
+
 class Densenet(nn.Module):
 
     def __init__(self, num_classes):
@@ -37,7 +45,9 @@ class Densenet(nn.Module):
         return self.model(x)
 
 class myNet():
-    def __init__(self, num_classes, num_epochs, num_workers, device, learning_rate=1e-4, weight_decay=1e-5, momentum=0.9, step_size=7, gamma=0.1, net_type='densenet', batch_size=32):
+    def __init__(self, description, report_path, num_classes, num_epochs, num_workers, device, learning_rate=1e-4, weight_decay=1e-5, momentum=0.9, step_size=7, gamma=0.1, net_type='densenet', batch_size=32):
+        self.description = description
+        self.report_path = report_path
         self.num_classes = num_classes
         self.num_epochs = num_epochs
         self.num_workers = num_workers
@@ -105,10 +115,16 @@ class myNet():
             self.optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=self.momentum, weight_decay=self.weight_decay)
         elif net_type == 'vit':
             self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate, weight_decay=self.weight_decay)
-        self.criterion = nn.BCEWithLogitsLoss()
+        
+        # qua definisco la loss function per il problema di classificazione multilabel
+        # BCE(p,y)=−[y⋅log(p)+(1−y)⋅log(1−p)]
+        # se una classe è molto rara, la BCE potrebbe non dare abbastanza peso agli errori su quella classe, non penalizza abbastanza il modello
+        # self.criterion = nn.BCEWithLogitsLoss()
+        self.criterion = self.focal_loss()
+        # la focal loss agiunge un fattore modulante alla BCE per dare più peso agli esempi difficili e rari, FL(p,y)=−α(1−p)γylog(p)−αpγ(1−y)log(1−p)
+        # lo schedueler per il learning rate, che lo riduce ogni step_size epoch moltiplicandolo per gamma
         self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=self.step_size, gamma=self.gamma)
    
-       
         K = self.num_classes  # 15
         self.auroc = MultilabelAUROC(num_labels=K, average="macro").to(self.device)
 
@@ -121,6 +137,54 @@ class myNet():
         self.f1_micro = MultilabelF1Score(num_labels=K, threshold=0.5, average="micro").to(self.device)
         self.f1_macro = MultilabelF1Score(num_labels=K, threshold=0.5, average="macro").to(self.device)
 
+    # alla fine è una BCE con un fattore in più che dà più peso agli esempi difficili
+    def focal_loss(self, logits, targets, alpha=0.25, gamma=2.0):
+        bce_loss = nn.BCEWithLogitsLoss(reduction='none')(logits, targets)
+        probs = torch.sigmoid(logits)
+        p_t = probs * targets + (1 - probs) * (1 - targets)
+        modulating_factor = (1 - p_t) ** gamma
+        alpha_factor = alpha * targets + (1 - alpha) * (1 - targets)
+        focal_loss = modulating_factor * alpha_factor * bce_loss
+        return focal_loss.mean()
+
+
+    def write_report_results(self, metrics, saving_epoch):
+        slurm_job_id = os.environ.get("SLURM_JOB_ID", "no_slurm_id")
+
+        LOG = {
+            "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "slurm_job_id": slurm_job_id,
+            "description": self.description,
+            "num_classes": self.num_classes,
+            "num_epochs": self.num_epochs,
+            "num_workers": self.num_workers,
+            "learning_rate": self.learning_rate,
+            "weight_decay": self.weight_decay,
+            "momentum": self.momentum,
+            "step_size": self.step_size,
+            "gamma": self.gamma,
+            "net_type": self.net_type,
+            "optimizer": str(self.optimizer),
+            "scheduler": str(self.scheduler),
+            "loss_function": str(self.criterion),
+            "saving_epoch_best_model": saving_epoch,
+            "results_metrics": {
+                "Accuracy(micro)" : metrics['accuracy_micro'],
+                "Precision(micro)" : metrics['precision_micro'],
+                "Recall(micro)": metrics['recall_micro'],
+                "Val loss" : metrics['val_loss'],
+                "AUROC(macro)" : metrics['auroc_macro'],
+                "F1(micro)" : metrics['f1_micro'],
+                "F1(macro)" : metrics['f1_macro'],
+                "Threshold" : metrics['threshold'],
+            }
+        }
+
+        os.makedirs(os.path.dirname(self.report_path), exist_ok=True)
+
+        # Sovrascrive sempre il file con l'ultimo esperimento
+        with open(self.report_path, "w") as f:
+            json.dump(LOG, f, indent=4)
 
     def train(self):
         patience = 10
@@ -162,19 +226,22 @@ class myNet():
             if current_auroc_value > best_auroc:
                 best_auroc = current_auroc_value
                 current_waiting_time = 0
-                torch.save(self.model.state_dict(), "/work/grana_far2023_fomo/ChestXray/models/best_model.pth")
+                torch.save(self.model.state_dict(), f"/work/grana_far2023_fomo/ChestXray/models/best_model_{SLURM_JOB_ID}.pth")
                 # scrivo in un file txt le metriche
                 print("Scrivo le metriche del best model su file...")
-                with open("/work/grana_far2023_fomo/ChestXray/models/best_model_metrics.txt", "w") as f:
+                with open(f"/work/grana_far2023_fomo/ChestXray/models/best_model_metrics_{SLURM_JOB_ID}.txt", "w") as f:
                     for key, value in metrics.items():
                         f.write(f"{key}: {value}\n")
                     f.write(f"epochs: {epoch+1}\n")
                 print(f"Best model saved with AUROC(macro): {best_auroc:.4f}")
+                self.write_report_results(metrics, saving_epoch=epoch+1)
             else:
                 current_waiting_time += 1
                 if current_waiting_time >= patience:
                     print("Early stopping triggered.")
                     break
+        wandb.finish()
+
 
     @torch.no_grad()
     def evaluate(self):
@@ -264,9 +331,12 @@ class myNet():
 
 if __name__ == '__main__':
 
+    slurm_job_id = os.environ.get("SLURM_JOB_ID", "no_slurm_id")
     num_classes = 15
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    trainer = myNet(num_classes=num_classes, num_epochs=50, num_workers=4, device=device, net_type='vit', batch_size=32)
+    description = "ViT model for Chest X-ray classification, Focal Loss"
+    report_path = f"/work/grana_far2023_fomo/ChestXray/results_report/report_{slurm_job_id}.json"
+    trainer = myNet(description=description, report_path = report_path, num_classes=num_classes, num_epochs=50, num_workers=4, device=device, net_type='vit', batch_size=32)
     trainer.train()
 
 
@@ -296,6 +366,22 @@ if __name__ == '__main__':
     # ∂loss/∂w per ogni parametro del modello.
     # Questi gradienti indicano quanto ogni peso influenza la loss e in che direzione va aggiornato per ridurla.
     # I pesi sono condivisi tra tutti i sample: non esistono “pesi per sample”, ma output per sample e gradienti globali accumulati dal batch.
+
+    # Ogni peso è una dimensione
+    # Immagina che il tuo modello abbia n pesi. Possiamo pensare a ognuno come a una coordinata in uno spazio n-dimensionale:
+    # w=[w1​,w2​,...,wn​]
+    # Ogni punto in questo spazio rappresenta uno stato del modello, cioè un set completo di pesi.
+    # Il gradiente indica una direzione
+    # Quando calcoli loss.backward(), ottieni un gradiente per ciascun peso:
+    # g=∂w∂loss​=[∂w1​∂L​,∂w2​∂L​,...,∂wn​∂L​]
+    # Questo vettore g punta nella direzione dove la loss cresce più rapidamente.
+    # Se vuoi ridurre la loss, ti muovi nella direzione opposta, aggiorno i pesi nella direzione opposta al gradiente:
+    # w←w−ηg
+    # Penalizzare un esempio difficile
+    # La Focal Loss fa in modo che gli esempi difficili generino gradienti più grandi:
+    # Per un esempio facile: gradiente piccolo → piccolo spostamento del vettore dei pesi.
+    # Per un esempio difficile: gradiente grande → grande spostamento del vettore dei pesi.
+    # In altre parole, la magnitudine del passo nello spazio dei pesi è modulata dalla difficoltà dell’esempio.
     
     
     
