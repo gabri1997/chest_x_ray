@@ -10,11 +10,6 @@ from torch.utils.data import DataLoader
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 
-# ImageNet normalization (standard)
-IMAGENET_MEAN = [0.485, 0.456, 0.406]
-IMAGENET_STD  = [0.229, 0.224, 0.225]
-
-
 class ChestXrayTorchDataset(Dataset):
     def __init__(self, hf_dataset, class_idx, num_classes, transform=None):
         self.hf_dataset = hf_dataset
@@ -102,6 +97,7 @@ class chest_xray_dataset_loader:
         return self.chest_ds_train, self.chest_ds_val, self.chest_ds_test, self.classes, self.class_idx, self.num_classes
 
 
+
 # Questa funzione non serve è ridondante con il metodo __getitem__ della classe ChestXrayTorchDatasets
 def multi_hot_encode_labels(classes, class_idx, num_classes):
     """Qui vorrei creare una funzione che data una lista di label testuali mi restituisca un vettore one-hot encoded"""
@@ -112,17 +108,43 @@ def multi_hot_encode_labels(classes, class_idx, num_classes):
     print("One-hot encoded vector:", y)
     return y
 
+def compute_mean_and_std(dataset):
+
+        loader = DataLoader(dataset, batch_size=32, shuffle=False, num_workers=4, pin_memory=True)
+        mean = 0.0
+        std = 0.0
+        num_images = 0.0
+
+        for images, _ in loader:
+            # la shape di images è [B,C,H,W] che è l'output del dataloader
+            batch_size = images.size(0)
+            # faccio una view così mettendo -1 posso collassare H e W e creare una sola dimensione
+            images = images.view(batch_size, images.size(1), -1)
+            # ora images è [B, C, H*W], essendo che a me serve la media per ogni canale devo arrivare a ottenere (C,) come shape
+            mean += images.mean(2).sum(0)
+            std += images.std(2).sum(0)
+            num_images += batch_size
+
+        final_mean = mean/num_images
+        final_std = std/num_images
+
+        return final_mean.numpy(), final_std.numpy()
 
 if __name__ == "__main__":
+
     dataset = chest_xray_dataset_loader()
     chest_ds_train, chest_ds_val, chest_ds_test, classes, class_idx, num_classes = dataset.load_dataset()
-     # Transform per il training
+    train_dataset = ChestXrayTorchDataset(chest_ds_train, class_idx, num_classes, transform=transforms.ToTensor())
+    final_mean, final_std = compute_mean_and_std(train_dataset)
+    print("Computed mean: ", final_mean)
+    print("Computed std: ", final_std)
+    # Transform per il training
     transform_train = transforms.Compose([
         transforms.Resize(256),
         transforms.RandomResizedCrop(224, scale=(0.8, 1.0)),
         transforms.RandomHorizontalFlip(p=0.5),
         transforms.ToTensor(),
-        transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
+        transforms.Normalize(mean=final_mean, std=final_mean)
     ])
 
     # Transform per validation e test
@@ -130,7 +152,7 @@ if __name__ == "__main__":
         transforms.Resize(256),
         transforms.CenterCrop(224),
         transforms.ToTensor(),
-        transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
+        transforms.Normalize(mean=final_mean, std=final_std),
     ])
     train_dataset = ChestXrayTorchDataset(chest_ds_train, class_idx, num_classes, transform=transform_train)
     val_dataset = ChestXrayTorchDataset(chest_ds_val, class_idx, num_classes, transform=transform_val)
@@ -157,14 +179,12 @@ if __name__ == "__main__":
     k = len(classes)
     print(f"Classes: {classes}, Total: {k}")
     class_to_idx = {cls:i for i, cls in enumerate(classes)}
-    train_dataset = ChestXrayTorchDataset(chest_ds_train, class_to_idx, k, transform=transform_train)
-    val_dataset = ChestXrayTorchDataset(chest_ds_val, class_to_idx, k, transform=transform_val)
-    test_dataset = ChestXrayTorchDataset(chest_ds_test, class_to_idx, k, transform=transform_val)
     print(f"Number of training samples: {len(train_dataset)}")  
     print(f"Number of validation samples: {len(val_dataset)}")
     print(f"Number of test samples: {len(test_dataset)}")
     # Esempio di utilizzo del dataloader
     train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, num_workers=4, pin_memory=True)
+
     for images, labels in train_loader:
         print(f"Batch images shape: {images.shape}")
         print(f"Batch labels shape: {labels.shape}")

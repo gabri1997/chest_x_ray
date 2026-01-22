@@ -20,8 +20,6 @@ from torchmetrics.classification import (
 from vit import SimpleViT
 import wandb
 
-IMAGENET_MEAN = [0.485, 0.456, 0.406]
-IMAGENET_STD  = [0.229, 0.224, 0.225]
 
 
 SLURM_JOB_ID = os.environ.get("SLURM_JOB_ID", "no_slurm_id")
@@ -75,13 +73,16 @@ class myNet():
             "net_type": net_type
         })
 
+        # questi valori vengono calcolati prima dalla classe dataloader.py compute_mean_and_std
+        dataset_mean = [0.485, 0.456, 0.406]
+        dataset_std = [0.229, 0.224, 0.225]
         
         transform_train = transforms.Compose([
             transforms.Resize(256),
             transforms.RandomResizedCrop(224, scale=(0.8, 1.0)),
             transforms.RandomHorizontalFlip(p=0.5),
             transforms.ToTensor(),
-            transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
+            transforms.Normalize(mean=dataset_mean, std=dataset_std),
         ])
 
         # Transform per validation e test
@@ -89,7 +90,7 @@ class myNet():
             transforms.Resize(256),
             transforms.CenterCrop(224),
             transforms.ToTensor(),
-            transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
+            transforms.Normalize(mean=dataset_mean, std=dataset_std),
         ])
 
         if net_type == 'densenet':
