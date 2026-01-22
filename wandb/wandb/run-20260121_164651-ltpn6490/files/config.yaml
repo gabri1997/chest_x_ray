@@ -1,0 +1,108 @@
+_wandb:
+    value:
+        cli_version: 0.24.0
+        e:
+            csrqg0voyc2uyt2it96ygxrojfcvo97f:
+                codePath: baseline_net.py
+                codePathLocal: baseline_net.py
+                cpu_count: 32
+                cpu_count_logical: 64
+                cudaVersion: "12.2"
+                disk:
+                    /:
+                        total: "210241560576"
+                        used: "49461850112"
+                email: gabrielerosati97@gmail.com
+                executable: /work/grana_far2023_fomo/ChestXray/Chest/bin/python
+                git:
+                    commit: da34b71c10f061e5fb37f4d9a231b86534fbaa1b
+                    remote: git@github.com:gabri1997/chest_x_ray.git
+                gpu: Quadro RTX 5000
+                gpu_count: 1
+                gpu_nvidia:
+                    - architecture: Turing
+                      cudaCores: 3072
+                      memoryTotal: "17179869184"
+                      name: Quadro RTX 5000
+                      uuid: GPU-adcbc143-9542-ef23-234f-ae9be926a726
+                host: rezzonico
+                memory:
+                    total: "404316856320"
+                os: Linux-5.15.0-144-generic-x86_64-with-glibc2.35
+                program: /work/grana_far2023_fomo/ChestXray/baseline_net.py
+                python: CPython 3.11.5
+                root: /work/grana_far2023_fomo/ChestXray/wandb
+                slurm:
+                    cluster_name: aimagelab
+                    conf: /etc/slurm/slurm.conf
+                    cpus_on_node: "4"
+                    cpus_per_task: "4"
+                    gpus_on_node: "1"
+                    gtids: "0"
+                    job_account: grana_maxillo
+                    job_cpus_per_node: "4"
+                    job_end_time: "1769096608"
+                    job_gid: "506"
+                    job_gpus: "4"
+                    job_id: "2711120"
+                    job_name: ChestXray_train
+                    job_nodelist: rezzonico
+                    job_num_nodes: "1"
+                    job_partition: all_usr_prod
+                    job_qos: normal
+                    job_start_time: "1769010208"
+                    job_uid: "52290"
+                    job_user: grosati
+                    jobid: "2711120"
+                    localid: "0"
+                    mem_per_node: "32768"
+                    nnodes: "1"
+                    nodeid: "0"
+                    nodelist: rezzonico
+                    oom_kill_step: "0"
+                    prio_process: "0"
+                    procid: "0"
+                    submit_dir: /work/grana_far2023_fomo/ChestXray
+                    submit_host: ailb-login-03
+                    task_pid: "1317106"
+                    tasks_per_node: "1"
+                    topology_addr: rezzonico
+                    topology_addr_pattern: node
+                    tres_per_task: cpu=4
+                startedAt: "2026-01-21T15:46:51.732363Z"
+                writerId: csrqg0voyc2uyt2it96ygxrojfcvo97f
+        m: []
+        python_version: 3.11.5
+        t:
+            "1":
+                - 1
+                - 41
+                - 49
+                - 51
+            "2":
+                - 1
+                - 41
+                - 49
+                - 51
+            "3":
+                - 16
+            "4": 3.11.5
+            "5": 0.24.0
+            "12": 0.24.0
+            "13": linux-x86_64
+batch_size:
+    value: 32
+gamma:
+    value: 0.1
+learning_rate:
+    value: 0.0001
+momentum:
+    value: 0.9
+net_type:
+    value: vit
+num_epochs:
+    value: 50
+step_size:
+    value: 7
+weight_decay:
+    value: 1e-05
