@@ -1,43 +1,43 @@
 # Chest X-ray Multilabel Classification with CNNs and Vision Transformers
 
-Questo progetto affronta il problema della **classificazione multilabel di immagini Chest X-ray** utilizzando sia **reti convoluzionali (DenseNet-121)** sia **Vision Transformer (ViT)**, con l’obiettivo di confrontarne le prestazioni e analizzarne i comportamenti in ambito medicale.
+This project addresses the problem of **multilabel classification of Chest X-ray images** using both **convolutional neural networks (DenseNet-121)** and **Vision Transformers (ViT)**, with the goal of comparing their performance and analyzing their behavior in the medical imaging domain.
 
 ---
 
-## Obiettivo
+## Objective
 
-Dato un esame radiografico del torace, il modello deve predire **più patologie simultaneamente** (multilabel classification), un setting tipico in ambito clinico.
+Given a chest X-ray image, the model must predict **multiple pathologies simultaneously** (multilabel classification), a setting that is typical in clinical practice.
 
-Il progetto si concentra su:
-- Confronto CNN vs Transformer
-- Analisi delle metriche multilabel
-- Studio di problemi di class imbalance
-- Training end-to-end con fine-tuning
+The project focuses on:
+- CNN vs Transformer comparison
+- Analysis of multilabel evaluation metrics
+- Study of class imbalance issues
+- End-to-end training with fine-tuning
 
 ---
 
-## Modelli Utilizzati
+## Models Used
 
 ### DenseNet-121
-- Pre-addestrata su ImageNet
-- Feature extractor convoluzionale
-- Classificatore finale `Linear → BCEWithLogitsLoss`
-- Fine-tuning completo di tutti i layer
+- Pretrained on ImageNet
+- Convolutional feature extractor
+- Final classifier: `Linear → BCEWithLogitsLoss`
+- Full fine-tuning of all layers
 
 ### Simple Vision Transformer (ViT)
-Implementazione custom di un Vision Transformer semplificato:
+Custom implementation of a simplified Vision Transformer:
 - Patch embedding (16×16)
-- Self-attention multi-head
+- Multi-head self-attention
 - Residual connections + LayerNorm
-- CLS token per classificazione globale
-- Allenato from scratch sul dataset medicale
+- CLS token for global classification
+- Trained from scratch on the medical dataset
 
 ---
 
-## Architettura ViT (schema concettuale)
+## ViT Architecture (Conceptual Diagram)
 
 ```
-Immagine
+Image
  ↓
 Patch Embedding
  ↓
@@ -60,9 +60,9 @@ Sigmoid (multilabel)
 
 ## Dataset
 
-- Dataset di Chest X-ray con annotazioni multilabel
-- Split: Training / Validation / Test
-- Dataset fortemente sbilanciato (class imbalance)
+- Chest X-ray dataset with multilabel annotations
+- Splits: Training / Validation / Test
+- Highly imbalanced dataset (class imbalance)
 
 ---
 
@@ -72,12 +72,12 @@ Sigmoid (multilabel)
 - Resize (256)
 - Random Resized Crop (224)
 - Horizontal Flip
-- Normalizzazione ImageNet
+- ImageNet normalization
 
 ### Validation/Test
 - Resize (256)
 - Center Crop (224)
-- Normalizzazione ImageNet
+- ImageNet normalization
 
 ---
 
@@ -88,13 +88,13 @@ Sigmoid (multilabel)
   - DenseNet → SGD + momentum
   - ViT → AdamW
 - Scheduler: StepLR
-- Early stopping basato su AUROC macro
-- Metriche multilabel con torchmetrics
-- Logging con Weights & Biases (wandb)
+- Early stopping based on macro AUROC
+- Multilabel metrics via torchmetrics
+- Logging with Weights & Biases (wandb)
 
 ---
 
-## Metriche Utilizzate
+## Evaluation Metrics
 
 - Accuracy (micro)
 - Precision (micro)
@@ -103,11 +103,11 @@ Sigmoid (multilabel)
 - F1-score (macro)
 - AUROC (macro)
 
-L’accuracy non è sufficiente in contesti multilabel sbilanciati.
+Accuracy alone is not sufficient in imbalanced multilabel settings.
 
 ---
 
-## Risultati Migliori
+## Best Results
 
 ### DenseNet-121
 ```
@@ -133,35 +133,35 @@ Val loss:           0.1981
 
 ---
 
-## Analisi dei Risultati
+## Results Analysis
 
-- Accuracy simile → non discriminante
-- ViT ottiene AUROC macro più alto
-- ViT più sensibile alle classi rare
-- DenseNet più conservativa (precision ↑, recall ↓)
-- In ambito medicale, alta sensibilità è spesso preferibile
-
----
-
-## Limiti Attuali
-
-- Forte class imbalance
-- F1 macro ancora basso
-- ViT allenato from scratch
+- Similar accuracy → not discriminative
+- ViT achieves higher macro AUROC
+- ViT is more sensitive to rare classes
+- DenseNet is more conservative (higher precision, lower recall)
+- In medical applications, higher sensitivity is often preferable
 
 ---
 
-## Sviluppi Futuri
+## Current Limitations
+
+- Strong class imbalance
+- Macro F1-score still low
+- ViT trained from scratch
+
+---
+
+## Future Work
 
 - Class-weighted BCE / Focal Loss
-- Threshold tuning per classi
-- Visualizzazione mappe di attenzione
-- Pretraining self-supervised
-- Ablation study
+- Per-class threshold tuning
+- Attention map visualization
+- Self-supervised pretraining
+- Ablation studies
 
 ---
 
-## Tecnologie Utilizzate
+## Technologies Used
 
 - PyTorch
 - Torchvision
@@ -169,15 +169,3 @@ Val loss:           0.1981
 - Vision Transformers
 - Weights & Biases
 - NVIDIA CUDA
-
----
-
-## Autore
-
-Progetto sviluppato a scopo di studio e ricerca su CNN e Transformer in medical imaging.
-
----
-
-## Licenza
-
-Uso accademico / sperimentale.
