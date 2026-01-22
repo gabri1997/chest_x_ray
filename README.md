@@ -24,7 +24,7 @@ Il progetto si concentra su:
 - Classificatore finale `Linear → BCEWithLogitsLoss`
 - Fine-tuning completo di tutti i layer
 
-### 2️Simple Vision Transformer (ViT)
+### Simple Vision Transformer (ViT)
 Implementazione custom di un Vision Transformer semplificato:
 - Patch embedding (16×16)
 - Self-attention multi-head
