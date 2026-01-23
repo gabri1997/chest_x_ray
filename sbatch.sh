@@ -4,8 +4,8 @@
 #SBATCH --job-name=ChestXray_train
 #SBATCH --output=logs/%x_%j.out
 #SBATCH --error=logs/%x_%j.err
-#SBATCH --time=24:00:00
-#SBATCH --mem=32G
+#SBATCH --time=4:00:00
+#SBATCH --mem=16G
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=4
 
@@ -45,7 +45,7 @@ python -V
 echo
 
 # Lancia training
-python baseline_net.py
+python dataloader.py
 
 echo
 echo "End: $(date)"

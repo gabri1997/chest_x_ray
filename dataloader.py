@@ -138,6 +138,8 @@ if __name__ == "__main__":
     final_mean, final_std = compute_mean_and_std(train_dataset)
     print("Computed mean: ", final_mean)
     print("Computed std: ", final_std)
+    # Computed mean:  [0.4980974 0.4980974 0.4980974]
+    # Computed std:  [0.22967155 0.22967155 0.22967155]
     # Transform per il training
     transform_train = transforms.Compose([
         transforms.Resize(256),

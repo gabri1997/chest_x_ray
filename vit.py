@@ -2,6 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+# Computed mean:  [0.4980974 0.4980974 0.4980974]
+# Computed std:  [0.22967155 0.22967155 0.22967155]
+
 class PatchEmbedding(nn.Module):
     def __init__(self, img_size=224, patch_size=16, in_channels=3, embed_dim=768):
         super().__init__()
