@@ -1,12 +1,15 @@
-from datetime import datetime
-import torch
-import numpy as np
 import os
 import json
+import wandb
+import torch
 import random
-import torch.nn as nn
-import torchvision.models as models
+import argparse
+import numpy as np
 from tqdm import tqdm
+import torch.nn as nn
+from vit import SimpleViT
+from datetime import datetime
+import torchvision.models as models
 from torchvision import transforms
 from torch.utils.data import DataLoader
 from dataloader import  ChestXrayTorchDataset
@@ -18,9 +21,7 @@ from torchmetrics.classification import (
     MultilabelRecall,
     MultilabelF1Score,
 )
-from vit import SimpleViT
-import wandb
-import argparse
+
 
 def set_seed(seed: int):
     os.environ["PYTHONHASHSEED"] = str(seed)
@@ -386,7 +387,6 @@ def convert_arg_line_to_args(arg_line):
 if __name__ == '__main__':
 
 
-    
     parser = argparse.ArgumentParser(fromfile_prefix_chars='@')
     parser.convert_arg_line_to_args = convert_arg_line_to_args
     parser.add_argument('--net_type', type=str, default='vit', choices=['densenet', 'vit'], help='Type of network to use: densenet or vit')

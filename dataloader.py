@@ -3,12 +3,10 @@ from torch.utils.data import Dataset
 from huggingface_hub import snapshot_download
 from datasets import load_dataset
 import numpy as np 
-import torch
 from torchvision import transforms
 from torch.utils.data import DataLoader
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-
 
 class ChestXrayTorchDataset(Dataset):
     def __init__(self, hf_dataset, class_idx, num_classes, transform=None):
