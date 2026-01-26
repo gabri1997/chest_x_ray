@@ -3,6 +3,7 @@ import torch
 import numpy as np
 import os
 import json
+import random
 import torch.nn as nn
 import torchvision.models as models
 from tqdm import tqdm
@@ -19,8 +20,24 @@ from torchmetrics.classification import (
 )
 from vit import SimpleViT
 import wandb
+import argparse
 
+def set_seed(seed: int):
+    os.environ["PYTHONHASHSEED"] = str(seed)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
 
+seed = 42
+set_seed(seed)
+os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"  # oppure ":16:8"
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+torch.use_deterministic_algorithms(True)
+
+g = torch.Generator()
+g.manual_seed(seed)
 
 SLURM_JOB_ID = os.environ.get("SLURM_JOB_ID", "no_slurm_id")
 print("SLURM Job ID:", SLURM_JOB_ID)
@@ -44,7 +61,7 @@ class Densenet(nn.Module):
         return self.model(x)
 
 class myNet():
-    def __init__(self, description, report_path, num_classes, num_epochs, num_workers, device, learning_rate=1e-4, weight_decay=1e-5, momentum=0.9, step_size=7, gamma=0.1, net_type='densenet', batch_size=32):
+    def __init__(self, description, report_path, num_classes, num_epochs, num_workers, device, learning_rate=1e-4, weight_decay=1e-5, momentum=0.9, step_size=7, gamma=0.1, net_type='densenet', batch_size=32, loss_function='focal'):
         self.description = description
         self.report_path = report_path
         self.num_classes = num_classes
@@ -60,6 +77,7 @@ class myNet():
         self.gamma = gamma
         self.net_type = net_type
         self.batch_size = batch_size
+        self.loss_function = loss_function
 
         # wandb
         wandb.init(project="Chest X-ray Classification", config={
@@ -108,8 +126,8 @@ class myNet():
         self.test_dataset = ChestXrayTorchDataset(chest_ds_test, class_idx, num_classes, transform=transform_val)
         print(f"Number of training samples: {len(self.train_dataset)}")
 
-        self.train_loader = DataLoader(self.train_dataset,batch_size=self.batch_size,shuffle=True,num_workers=self.num_workers,pin_memory=True)
-        self.val_loader = DataLoader(self.val_dataset,batch_size=self.batch_size,shuffle=False,num_workers=self.num_workers,pin_memory=True)
+        self.train_loader = DataLoader(self.train_dataset,batch_size=self.batch_size,shuffle=True,num_workers=self.num_workers,pin_memory=True, generator=g)
+        self.val_loader = DataLoader(self.val_dataset,batch_size=self.batch_size,shuffle=False,num_workers=self.num_workers,pin_memory=True, generator=g)
         self.test_loader = DataLoader(self.test_dataset,batch_size=self.batch_size,shuffle=False,num_workers=self.num_workers,pin_memory=True)
 
         # qui sto allenando tutti i parametri del modello (densenet + classifier) perchè self.model.parameters() include tutti i parametri della rete, quindi sto facendo fine tuning completo
@@ -121,8 +139,12 @@ class myNet():
         # qua definisco la loss function per il problema di classificazione multilabel
         # BCE(p,y)=−[y⋅log(p)+(1−y)⋅log(1−p)]
         # se una classe è molto rara, la BCE potrebbe non dare abbastanza peso agli errori su quella classe, non penalizza abbastanza il modello
-        # self.criterion = nn.BCEWithLogitsLoss()
-        self.criterion = self.focal_loss()
+        if self.loss_function == "bce":
+            self.criterion = nn.BCEWithLogitsLoss()
+        else:
+            self.criterion = None  # useremo self.focal_loss
+
+
         # la focal loss agiunge un fattore modulante alla BCE per dare più peso agli esempi difficili e rari, FL(p,y)=−α(1−p)γylog(p)−αpγ(1−y)log(1−p)
         # lo schedueler per il learning rate, che lo riduce ogni step_size epoch moltiplicandolo per gamma
         self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=self.step_size, gamma=self.gamma)
@@ -182,7 +204,7 @@ class myNet():
             "net_type": self.net_type,
             "optimizer": str(self.optimizer),
             "scheduler": str(self.scheduler),
-            "loss_function": str(self.criterion),
+            "loss_function": str(self.loss_function),
             "saving_epoch_best_model": saving_epoch,
             "results_metrics": {
                 "Accuracy(micro)" : metrics['accuracy_micro'],
@@ -228,7 +250,11 @@ class myNet():
                self.optimizer.zero_grad()
                outputs = self.model(image)
                # calcolo della loss
-               loss = self.criterion(outputs, lbl.float())
+               if self.loss_function == "bce":
+                    loss = self.criterion(outputs, lbl.float())
+               else:
+                    loss = self.focal_loss(outputs, lbl.float())
+
                # calcolo dei gradienti, per ogni parametri w, ottengo la derivata della loss rispetto a w, questi gradienti vengono salvati in w.grad
                loss.backward()
                # update dei pesi con regola w ← w − (lr⋅∇w​loss) esempio per SGD base
@@ -350,16 +376,35 @@ class myNet():
             })
 
             return metrics
-            
+        
+def convert_arg_line_to_args(arg_line):
+    for arg in arg_line.split():
+        if not arg.strip():
+            continue
+        yield arg           
 
 if __name__ == '__main__':
 
-    slurm_job_id = os.environ.get("SLURM_JOB_ID", "no_slurm_id")
+
+    
+    parser = argparse.ArgumentParser(fromfile_prefix_chars='@')
+    parser.convert_arg_line_to_args = convert_arg_line_to_args
+    parser.add_argument('--net_type', type=str, default='vit', choices=['densenet', 'vit'], help='Type of network to use: densenet or vit')
+    parser.add_argument('--batch_size', type=int, default=32, help='Batch size for training and evaluation')
+    parser.add_argument('--num_epochs', type=int, default=50, help='Number of epochs to train the model')
+    parser.add_argument('--learning_rate', type=float, default=1e-4, help='Learning rate for the optimizer')
+    parser.add_argument('--weight_decay', type=float, default=1e-5, help='Weight decay (L2 regularization) for the optimizer')
+    parser.add_argument('--loss_function', type=str, default='focal', choices=['bce', 'focal'], help='Loss function to use: bce or focal')
+    parser.add_argument('--description', type=str, default="Chest X-ray classification model", help='Description of the experiment')
+    args = parser.parse_args()
+    
+    
     num_classes = 15
+    slurm_job_id = os.environ.get("SLURM_JOB_ID", "no_slurm_id")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    description = "ViT model for Chest X-ray classification, Focal Loss"
     report_path = f"/work/grana_far2023_fomo/ChestXray/results_report/report_{slurm_job_id}.json"
-    trainer = myNet(description=description, report_path = report_path, num_classes=num_classes, num_epochs=50, num_workers=4, device=device, net_type='vit', batch_size=32)
+
+    trainer = myNet(description=args.description, report_path = report_path, num_classes=num_classes, num_epochs=args.num_epochs, num_workers=4, device=device, net_type=args.net_type, batch_size=args.batch_size, loss_function=args.loss_function)
     trainer.train()
 
 
