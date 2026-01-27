@@ -22,6 +22,8 @@ from torchmetrics.classification import (
     MultilabelF1Score,
 )
 
+from wrapper import metrics_count_np
+
 
 def set_seed(seed: int):
     os.environ["PYTHONHASHSEED"] = str(seed)
@@ -293,8 +295,13 @@ class myNet():
         wandb.finish()
 
 
-    @torch.no_grad()
+   
     def evaluate(self):
+        
+        tp_tot = 0
+        tn_tot = 0
+        fp_tot = 0
+        fn_tot = 0
 
         self.auroc.reset()
         self.acc_micro.reset()
@@ -326,11 +333,31 @@ class myNet():
                 # calcolo il mio output
                 outputs = self.model(image)
             
-                loss = self.criterion(outputs, lbl.float())
+                if self.loss_function == "bce":
+                    loss = self.criterion(outputs, lbl.float())
+                else:
+                    loss = self.focal_loss(outputs, lbl.float())
+
                 tot_loss += loss.item()*n_samples
 
                 # converto gli output in probabilità con la sigmoid, essendo problema multilabel un sample può avere più classi -> non uso softmax che forza la somma delle probabilità a 1            
                 probs = torch.sigmoid(outputs)                        
+
+                pred = (probs >= 0.5).to(torch.uint8).cpu().numpy()
+                true = lbl.to(torch.uint8).cpu().numpy()
+
+                tp, tn, fp, fn = metrics_count_np(pred, true)
+
+                if tp_tot is None:
+                    tp_tot = tp
+                    tn_tot = tn
+                    fp_tot = fp
+                    fn_tot = fn
+                else:
+                    tp_tot += tp
+                    tn_tot += tn
+                    fp_tot += fp
+                    fn_tot += fn
 
                 # AUROC: usa probs (non binarie)
                 self.auroc.update(probs, lbl.int())
@@ -341,6 +368,18 @@ class myNet():
                 self.rec_micro.update(probs, lbl.int())
                 self.f1_micro.update(probs, lbl.int())
                 self.f1_macro.update(probs, lbl.int())
+
+            # micro totals
+            # le micro fanno la somma e la media totale di tutto non per classe, cioè fa la media una sola volta sommando tutto, invece macro fa la media dei valori delle metriche per ciascuna classe
+            # micro tende a essere influenzata dalle classi più frequenti, macro tratta tutte le classi allo stesso modo
+            TP = int(tp_tot.sum())
+            FP = int(fp_tot.sum())
+            TN = int(tn_tot.sum())
+            FN = int(fn_tot.sum())
+
+            print(f"TOTAL (micro) -> TP={TP} FP={FP} TN={TN} FN={FN}")
+
+            print(f"Dal calcolo di metrics.c risulta per classe ----> TP: {tp_tot}, TN: {tn_tot}, FP: {fp_tot}, FN: {fn_tot}")
 
             avg_val_loss = tot_loss / max(tot_samples, 1)
 

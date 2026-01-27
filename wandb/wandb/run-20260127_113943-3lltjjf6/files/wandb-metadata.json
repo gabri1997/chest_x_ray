@@ -1,0 +1,81 @@
+{
+  "os": "Linux-5.15.0-144-generic-x86_64-with-glibc2.35",
+  "python": "CPython 3.11.5",
+  "startedAt": "2026-01-27T10:39:43.064321Z",
+  "args": [
+    "@/work/grana_far2023_fomo/ChestXray/args.txt"
+  ],
+  "program": "/work/grana_far2023_fomo/ChestXray/baseline_net.py",
+  "codePath": "baseline_net.py",
+  "codePathLocal": "baseline_net.py",
+  "git": {
+    "remote": "git@github.com:gabri1997/chest_x_ray.git",
+    "commit": "3f9ad3431293b2d1597371aa67e47d0c8c662b69"
+  },
+  "email": "gabrielerosati97@gmail.com",
+  "root": "/work/grana_far2023_fomo/ChestXray/wandb",
+  "host": "gervasoni",
+  "executable": "/work/grana_far2023_fomo/ChestXray/Chest/bin/python",
+  "cpu_count": 32,
+  "cpu_count_logical": 64,
+  "gpu": "Quadro RTX 5000",
+  "gpu_count": 1,
+  "disk": {
+    "/": {
+      "total": "210241560576",
+      "used": "65503469568"
+    }
+  },
+  "memory": {
+    "total": "404320796672"
+  },
+  "gpu_nvidia": [
+    {
+      "name": "Quadro RTX 5000",
+      "memoryTotal": "17179869184",
+      "cudaCores": 3072,
+      "architecture": "Turing",
+      "uuid": "GPU-bd393074-8fd6-8ebe-630e-8d2a99dbbe21"
+    }
+  ],
+  "cudaVersion": "12.2",
+  "slurm": {
+    "cluster_name": "aimagelab",
+    "conf": "/etc/slurm/slurm.conf",
+    "cpus_on_node": "4",
+    "cpus_per_task": "4",
+    "gpus_on_node": "1",
+    "gtids": "0",
+    "job_account": "grana_maxillo",
+    "job_cpus_per_node": "4",
+    "job_end_time": "1769596575",
+    "job_gid": "506",
+    "job_gpus": "1",
+    "job_id": "2712824",
+    "job_name": "ChestXray_train",
+    "job_nodelist": "gervasoni",
+    "job_num_nodes": "1",
+    "job_partition": "all_usr_prod",
+    "job_qos": "normal",
+    "job_start_time": "1769510175",
+    "job_uid": "52290",
+    "job_user": "grosati",
+    "jobid": "2712824",
+    "localid": "0",
+    "mem_per_node": "16384",
+    "nnodes": "1",
+    "nodeid": "0",
+    "nodelist": "gervasoni",
+    "oom_kill_step": "0",
+    "prio_process": "0",
+    "procid": "0",
+    "submit_dir": "/work/grana_far2023_fomo/ChestXray",
+    "submit_host": "ailb-login-03",
+    "task_pid": "874059",
+    "tasks_per_node": "1",
+    "topology_addr": "gervasoni",
+    "topology_addr_pattern": "node",
+    "tres_per_task": "cpu=4"
+  },
+  "writerId": "zbys7fgk0agpgd687guo0c5jvbrpf98k"
+}

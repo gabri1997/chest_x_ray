@@ -1,0 +1,81 @@
+{
+  "os": "Linux-5.15.0-144-generic-x86_64-with-glibc2.35",
+  "python": "CPython 3.11.5",
+  "startedAt": "2026-01-26T16:24:29.994869Z",
+  "args": [
+    "@/work/grana_far2023_fomo/ChestXray/args.txt"
+  ],
+  "program": "/work/grana_far2023_fomo/ChestXray/baseline_net.py",
+  "codePath": "baseline_net.py",
+  "codePathLocal": "baseline_net.py",
+  "git": {
+    "remote": "git@github.com:gabri1997/chest_x_ray.git",
+    "commit": "3f9ad3431293b2d1597371aa67e47d0c8c662b69"
+  },
+  "email": "gabrielerosati97@gmail.com",
+  "root": "/work/grana_far2023_fomo/ChestXray/wandb",
+  "host": "patagarro",
+  "executable": "/work/grana_far2023_fomo/ChestXray/Chest/bin/python",
+  "cpu_count": 24,
+  "cpu_count_logical": 48,
+  "gpu": "NVIDIA L40S",
+  "gpu_count": 1,
+  "disk": {
+    "/": {
+      "total": "214643507200",
+      "used": "28606316544"
+    }
+  },
+  "memory": {
+    "total": "540712648704"
+  },
+  "gpu_nvidia": [
+    {
+      "name": "NVIDIA L40S",
+      "memoryTotal": "48305799168",
+      "cudaCores": 18176,
+      "architecture": "Ada",
+      "uuid": "GPU-343861d6-1a10-387b-855a-8b530ee739af"
+    }
+  ],
+  "cudaVersion": "12.2",
+  "slurm": {
+    "cluster_name": "aimagelab",
+    "conf": "/etc/slurm/slurm.conf",
+    "cpus_on_node": "4",
+    "cpus_per_task": "4",
+    "gpus_on_node": "1",
+    "gtids": "0",
+    "job_account": "grana_maxillo",
+    "job_cpus_per_node": "4",
+    "job_end_time": "1769530847",
+    "job_gid": "506",
+    "job_gpus": "0",
+    "job_id": "2712465",
+    "job_name": "ChestXray_train",
+    "job_nodelist": "patagarro",
+    "job_num_nodes": "1",
+    "job_partition": "all_usr_prod",
+    "job_qos": "normal",
+    "job_start_time": "1769444447",
+    "job_uid": "52290",
+    "job_user": "grosati",
+    "jobid": "2712465",
+    "localid": "0",
+    "mem_per_node": "16384",
+    "nnodes": "1",
+    "nodeid": "0",
+    "nodelist": "patagarro",
+    "oom_kill_step": "0",
+    "prio_process": "0",
+    "procid": "0",
+    "submit_dir": "/work/grana_far2023_fomo/ChestXray",
+    "submit_host": "ailb-login-03",
+    "task_pid": "3459804",
+    "tasks_per_node": "1",
+    "topology_addr": "patagarro",
+    "topology_addr_pattern": "node",
+    "tres_per_task": "cpu=4"
+  },
+  "writerId": "r6crdmvwlfasddyrx0rn1e9trdj9ppjt"
+}

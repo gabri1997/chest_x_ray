@@ -45,7 +45,7 @@ python -V
 echo
 
 # Lancia training
-python baseline_net.py @/work/grana_far2023_fomo/ChestXray/config.txt
+python baseline_net.py @/work/grana_far2023_fomo/ChestXray/args.txt
 
 
 echo
