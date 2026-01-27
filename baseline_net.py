@@ -32,6 +32,11 @@ def set_seed(seed: int):
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
 
+def seed_worker(worker_id):
+    worker_seed = seed + worker_id
+    np.random.seed(worker_seed)
+    random.seed(worker_seed)
+
 seed = 42
 set_seed(seed)
 os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"  # oppure ":16:8"
@@ -91,7 +96,9 @@ class myNet():
             "gamma": gamma,
             "num_epochs": num_epochs,
             "batch_size": batch_size,
-            "net_type": net_type
+            "net_type": net_type,
+            "loss_function": loss_function
+
         })
 
         # questi valori vengono calcolati prima dalla classe dataloader.py compute_mean_and_std
@@ -129,8 +136,8 @@ class myNet():
         self.test_dataset = ChestXrayTorchDataset(chest_ds_test, class_idx, num_classes, transform=transform_val)
         print(f"Number of training samples: {len(self.train_dataset)}")
 
-        self.train_loader = DataLoader(self.train_dataset,batch_size=self.batch_size,shuffle=True,num_workers=self.num_workers,pin_memory=True, generator=g)
-        self.val_loader = DataLoader(self.val_dataset,batch_size=self.batch_size,shuffle=False,num_workers=self.num_workers,pin_memory=True, generator=g)
+        self.train_loader = DataLoader(self.train_dataset,batch_size=self.batch_size,shuffle=True,num_workers=self.num_workers,pin_memory=True, generator=g, worker_init_fn=seed_worker)
+        self.val_loader = DataLoader(self.val_dataset,batch_size=self.batch_size,shuffle=False,num_workers=self.num_workers,pin_memory=True, generator=g, worker_init_fn=seed_worker)
         self.test_loader = DataLoader(self.test_dataset,batch_size=self.batch_size,shuffle=False,num_workers=self.num_workers,pin_memory=True)
 
         # qui sto allenando tutti i parametri del modello (densenet + classifier) perchè self.model.parameters() include tutti i parametri della rete, quindi sto facendo fine tuning completo
@@ -293,15 +300,13 @@ class myNet():
                     print("Early stopping triggered.")
                     break
         wandb.finish()
-
-
    
     def evaluate(self):
         
-        tp_tot = 0
-        tn_tot = 0
-        fp_tot = 0
-        fn_tot = 0
+        tp_tot = None
+        tn_tot = None
+        fp_tot = None
+        fn_tot = None
 
         self.auroc.reset()
         self.acc_micro.reset()
