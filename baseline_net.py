@@ -21,7 +21,6 @@ from torchmetrics.classification import (
     MultilabelRecall,
     MultilabelF1Score,
 )
-
 from wrapper import metrics_count_np
 
 
@@ -249,10 +248,10 @@ class myNet():
                image = image.to(self.device, non_blocking=True)
 
                # se uso mixup augmentation, perchè la loss diventa continua essendo il target continuo tra 0 e 1:  
-               lbl = lbl.to(self.device, non_blocking=True).float()
-               image,lbl = self.mixup_data(image, lbl, alpha=0.2, prob=0.5)
+               #    lbl = lbl.to(self.device, non_blocking=True).float()
+               #    image,lbl = self.mixup_data(image, lbl, alpha=0.2, prob=0.5)
                # se non uso mixup:
-               # lbl = lbl.to(self.device, non_blocking=True)
+               lbl = lbl.to(self.device, non_blocking=True)
 
 
                # azzero i gradienti perchè Pytorch accumula i gradienti ad ogni backward() per default

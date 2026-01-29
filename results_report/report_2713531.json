@@ -1,0 +1,28 @@
+{
+    "date": "2026-01-29 13:31:57",
+    "slurm_job_id": "2713531",
+    "description": "Chest_X_Vit_NoMixup_focal",
+    "num_classes": 15,
+    "num_epochs": 50,
+    "num_workers": 4,
+    "learning_rate": 0.0001,
+    "weight_decay": 1e-05,
+    "momentum": 0.9,
+    "step_size": 7,
+    "gamma": 0.1,
+    "net_type": "vit",
+    "optimizer": "AdamW (\nParameter Group 0\n    amsgrad: False\n    betas: (0.9, 0.999)\n    capturable: False\n    decoupled_weight_decay: True\n    differentiable: False\n    eps: 1e-08\n    foreach: None\n    fused: None\n    initial_lr: 0.0001\n    lr: 1.0000000000000004e-08\n    maximize: False\n    weight_decay: 1e-05\n)",
+    "scheduler": "<torch.optim.lr_scheduler.StepLR object at 0x148eb6c83bd0>",
+    "loss_function": "bce",
+    "saving_epoch_best_model": 28,
+    "results_metrics": {
+        "Accuracy(micro)": 0.9297894835472107,
+        "Precision(micro)": 0.6753610372543335,
+        "Recall(micro)": 0.32301944494247437,
+        "Val loss": 0.19836935146585177,
+        "AUROC(macro)": 0.7267455458641052,
+        "F1(micro)": 0.4370172619819641,
+        "F1(macro)": 0.05859947204589844,
+        "Threshold": 0.5
+    }
+}

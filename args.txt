@@ -3,5 +3,5 @@
 --num_epochs 50
 --learning_rate 1e-4
 --weight_decay 1e-5
---loss_function focal
---description Chest_X_ray_classification_model
+--loss_function bce
+--description Chest_X_Vit_NoMixup_focal
